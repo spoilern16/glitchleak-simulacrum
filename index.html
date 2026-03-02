@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Симулякр — SIMULACRUM</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Oswald:wght@700&family=PT+Sans:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root { --green: #00ff50; --bg: #040404; --mono: 'Share Tech Mono', monospace; --display: 'Oswald', sans-serif; --body: 'PT Sans', sans-serif; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--bg); color: #fff; font-family: var(--body); min-height: 100vh; overflow-x: hidden; }
+  #matrix { position: fixed; inset: 0; opacity: 0.06; pointer-events: none; z-index: 0; }
+  body::before { content: ''; position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px); pointer-events: none; z-index: 1; }
+  body::after { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0,255,80,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,80,0.025) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
+  .page { position: relative; z-index: 2; max-width: 600px; margin: 0 auto; padding: 0 0 60px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid rgba(0,255,80,0.1); background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100; }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); animation: blink 1.8s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+  .logo { font-family: var(--display); font-size: 16px; letter-spacing: 2px; }
+  .logo-sub { font-family: var(--mono); font-size: 9px; color: rgba(0,255,80,0.4); letter-spacing: 1px; }
+  .back-btn { font-family: var(--mono); font-size: 11px; color: rgba(0,255,80,0.5); letter-spacing: 1px; text-decoration: none; border: 1px solid rgba(0,255,80,0.2); padding: 4px 10px; transition: all 0.2s; }
+  .back-btn:hover { background: rgba(0,255,80,0.1); color: var(--green); }
+
+  /* Hero */
+  .hero { width: 100%; height: 280px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(ellipse at center, #020a02 0%, #000 70%); }
+  .hero-text { text-align: center; position: relative; z-index: 2; }
+  .hero-label { font-family: var(--mono); font-size: 10px; color: rgba(0,255,80,0.4); letter-spacing: 4px; margin-bottom: 16px; }
+  .hero-title { font-family: var(--display); font-size: 64px; font-weight: 700; color: var(--green); text-shadow: 0 0 40px rgba(0,255,80,0.4); letter-spacing: -2px; line-height: 1; }
+  .hero-sub { font-family: var(--mono); font-size: 12px; color: rgba(255,255,255,0.3); letter-spacing: 3px; margin-top: 12px; }
+
+  /* Floating symbols */
+  .symbol { position: absolute; font-family: var(--mono); color: rgba(0,255,80,0.06); font-size: 14px; animation: float linear infinite; }
+  @keyframes float { from { transform: translateY(100%); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+
+  /* Post */
+  .post { margin: 0 16px; background: rgba(4,4,4,0.95); border: 1px solid rgba(0,255,80,0.1); border-top: 3px solid rgba(0,255,80,0.4); padding: 32px 28px 28px; }
+  .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .post-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; box-shadow: 0 0 6px var(--green); animation: blink 1.5s infinite; }
+  .post-label { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: 3px; opacity: 0.8; }
+  .post-date { margin-left: auto; font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.2); letter-spacing: 2px; }
+  .post-title { font-family: var(--display); font-size: 36px; font-weight: 700; line-height: 1.05; letter-spacing: -0.5px; margin-bottom: 6px; }
+  .post-title .green { color: var(--green); text-shadow: 0 0 20px rgba(0,255,80,0.3); }
+  .divider { width: 40px; height: 2px; background: linear-gradient(90deg, var(--green), transparent); margin: 16px 0; }
+  .post-body { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.72); margin-bottom: 16px; }
+  .post-body strong { color: #fff; }
+  .post-body em { color: rgba(0,255,80,0.8); font-style: normal; font-family: var(--mono); font-size: 13px; }
+  .post-quote { background: rgba(0,255,80,0.03); border-left: 2px solid var(--green); padding: 14px 16px; margin: 18px 0; font-size: 14px; color: rgba(255,255,255,0.55); line-height: 1.7; font-style: italic; }
+  .post-list { border-left: 2px solid rgba(0,255,80,0.18); padding: 12px 0 12px 18px; margin: 18px 0; display: flex; flex-direction: column; gap: 12px; }
+  .post-list-item { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; display: flex; gap: 10px; }
+  .post-list-item::before { content: '—'; color: rgba(0,255,80,0.35); font-family: var(--mono); flex-shrink: 0; }
+  .post-verdict { font-family: var(--mono); font-size: 12px; color: rgba(0,255,80,0.45); letter-spacing: 0.5px; line-height: 1.9; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 18px; margin-top: 18px; }
+  .post-verdict .white { color: rgba(255,255,255,0.75); }
+  .post-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 16px; }
+  .post-channel { font-family: var(--mono); font-size: 11px; color: rgba(0,255,80,0.45); letter-spacing: 1px; }
+
+  /* Share */
+  .share-section { margin: 16px 16px 0; display: flex; gap: 10px; }
+  .btn-tg { flex: 1; padding: 14px; background: rgba(0,255,80,0.08); border: 1px solid rgba(0,255,80,0.3); color: var(--green); font-family: var(--display); font-size: 14px; letter-spacing: 3px; cursor: pointer; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .btn-tg:hover { background: rgba(0,255,80,0.15); }
+  .btn-copy { padding: 14px 18px; background: transparent; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.35); font-family: var(--mono); font-size: 11px; letter-spacing: 1px; cursor: pointer; transition: all 0.2s; }
+  .btn-copy:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); }
+  .btn-copy.copied { color: var(--green); border-color: rgba(0,255,80,0.3); }
+
+  /* More */
+  .more-section { margin: 24px 16px 0; }
+  .more-title { font-family: var(--mono); font-size: 9px; color: rgba(255,255,255,0.25); letter-spacing: 3px; margin-bottom: 12px; }
+  .more-grid { display: flex; flex-direction: column; gap: 8px; }
+  .more-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s; text-decoration: none; }
+  .more-card:hover { background: rgba(0,255,80,0.06); border-color: rgba(0,255,80,0.2); }
+  .more-card-text { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.4; }
+  .more-card-tag { font-family: var(--mono); font-size: 9px; color: rgba(0,255,80,0.35); letter-spacing: 1px; white-space: nowrap; margin-left: 12px; }
+
+  .footer { margin: 24px 16px 0; padding: 20px; border: 1px solid rgba(255,255,255,0.04); text-align: center; }
+  .footer-text { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 2px; line-height: 2; }
+  .footer-link { color: rgba(0,255,80,0.4); text-decoration: none; }
+</style>
+</head>
+<body>
+<canvas id="matrix"></canvas>
+<div class="page">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="dot"></div>
+      <div>
+        <div class="logo">SIMULACRUM</div>
+        <div class="logo-sub">// ГЛИТЧ В МАТРИЦЕ</div>
+      </div>
+    </div>
+    <a href="https://spoilern16.github.io/glitchleak-news" class="back-btn">← НАЗАД</a>
+  </div>
+
+  <div class="hero">
+    <div class="hero-text">
+      <div class="hero-label">// КОНЦЕПЦИЯ</div>
+      <div class="hero-title">СИМУЛЯКР</div>
+      <div class="hero-sub">ЧТО ЭТО НА САМОМ ДЕЛЕ</div>
+    </div>
+  </div>
+
+  <div class="post">
+    <div class="post-header">
+      <div class="post-dot"></div>
+      <div class="post-label">🧠 КОНЦЕПЦИЯ</div>
+      <div class="post-date">02.03.2026</div>
+    </div>
+
+    <div class="post-title">
+      Симулякр —<br>
+      <span class="green">это не подделка.</span>
+    </div>
+    <div class="divider"></div>
+
+    <div class="post-body">
+      Большинство людей думают, что симулякр — это просто <strong>фальшивка</strong>. Копия, которая притворяется оригиналом. Но Бодрийяр имел в виду нечто гораздо более пугающее.
+    </div>
+
+    <div class="post-quote">
+      Подделка притворяется оригиналом.<br>
+      Симулякр убеждает, что <strong>оригинала никогда не было</strong>.
+    </div>
+
+    <div class="post-body">
+      Разница огромная. Подделка — это ложь, которую можно разоблачить. Симулякр — это реальность, которая заменила саму себя. Ты уже не можешь найти «настоящую» версию, потому что она исчезла.
+      <br><br>
+      Бодрийяр выделял <strong>четыре стадии</strong>:
+    </div>
+
+    <div class="post-list">
+      <div class="post-list-item">Образ отражает реальность — это нормальное представление</div>
+      <div class="post-list-item">Образ маскирует и искажает реальность — это пропаганда</div>
+      <div class="post-list-item">Образ маскирует отсутствие реальности — это симуляция</div>
+      <div class="post-list-item">Образ больше не связан ни с какой реальностью — это <em>чистый симулякр</em></div>
+    </div>
+
+    <div class="post-body">
+      Посмотри на политические новости. На рекламу «настоящих» продуктов. На фото еды в инстаграме. На «искренность» публичных людей.
+      <br><br>
+      Спроси себя: где оригинал?
+    </div>
+
+    <div class="post-quote">
+      Мы живём в мире, где всё больше информации<br>
+      и всё меньше смысла.<br><br>
+      — Жан Бодрийяр
+    </div>
+
+    <div class="post-verdict">
+      <span class="white">Матрица — это не тюрьма.</span><br>
+      Это мир, в котором ты перестал искать выход,<br>
+      потому что забыл, что был вход.
+    </div>
+
+    <div class="post-footer">
+      <div class="post-channel">🐇 @glitchleak</div>
+      <div style="font-family:var(--mono);font-size:9px;color:rgba(255,255,255,0.15);letter-spacing:1px">SIMULACRUM v1.0</div>
+    </div>
+  </div>
+
+  <div class="share-section">
+    <a href="https://t.me/glitchleak" class="btn-tg">🐇 ЧИТАТЬ КАНАЛ</a>
+    <button class="btn-copy" id="copyBtn" onclick="copyLink()">КОПИРОВАТЬ ССЫЛКУ</button>
+  </div>
+
+  <div class="more-section">
+    <div class="more-title">// ЕЩЁ ИЗ КАНАЛА</div>
+    <div class="more-grid">
+      <a href="https://spoilern16.github.io/glitchleak-news" class="more-card">
+        <div class="more-card-text">Сегодня. Рунет сдан. РКН, ФСБ и Минцифры получили контроль</div>
+        <div class="more-card-tag">📡 ГЛИТЧ</div>
+      </a>
+      <a href="https://spoilern16.github.io/glitchleak-1971" class="more-card">
+        <div class="more-card-text">С 1971 года производительность выросла на 65%. Зарплаты — нет</div>
+        <div class="more-card-tag">🕳 НОРА</div>
+      </a>
+      <a href="https://spoilern16.github.io/glitchleak-quiz" class="more-card">
+        <div class="more-card-text">Насколько глубоко ты в Матрице? Пройди тест — 7 вопросов</div>
+        <div class="more-card-tag">🐇 ТЕСТ</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">
+      SIMULACRUM | Глитч в Матрице<br>
+      <a href="https://t.me/glitchleak" class="footer-link">@glitchleak</a>
+      &nbsp;·&nbsp; Мир — это копия, у которой нет оригинала
+    </div>
+  </div>
+
+</div>
+<script>
+const canvas = document.getElementById('matrix');
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+const ctx = canvas.getContext('2d');
+const cols = Math.floor(canvas.width / 16);
+const drops = Array(cols).fill(1);
+const chars = 'アイウエオ01СИМУЛЯКРBAUDRILLARD';
+function draw() {
+  ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#00ff50'; ctx.font = '13px monospace';
+  drops.forEach((y,i) => {
+    ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*16, y*16);
+    if (y*16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+setInterval(draw, 60);
+function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ СКОПИРОВАНО'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'КОПИРОВАТЬ ССЫЛКУ'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
+</script>
+</body>
+</html>
